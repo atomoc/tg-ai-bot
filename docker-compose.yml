@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  ai-bot:
+    container_name: ai-bot
+    build:
+      context: .
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data

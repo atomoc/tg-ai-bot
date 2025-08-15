@@ -3,29 +3,40 @@ import { ConfigType } from '@nestjs/config';
 import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import appConfig from '../../config/app.config';
-import { LlmProvider, ChatMessage } from '../../llm/interfaces/llm.interface';
+import {
+	LlmProvider,
+	ChatMessage,
+} from '../../llm/interfaces/llm.interface';
 
 @Injectable()
 export class OpenaiService implements LlmProvider {
 	private readonly httpAgent?: HttpsProxyAgent<string>;
 	
-	constructor(@Inject(appConfig.KEY) private config: ConfigType<typeof appConfig>) {
+	constructor(
+		@Inject(appConfig.KEY) private config: ConfigType<typeof appConfig>,
+	) {
 		if (config.proxyString) {
 			const [ip, port, login, password] = config.proxyString.split(':');
-			this.httpAgent = new HttpsProxyAgent(`http://${login}:${password}@${ip}:${port}`);
+			this.httpAgent = new HttpsProxyAgent(
+				`http://${login}:${password}@${ip}:${port}`,
+			);
 		}
 	}
 	
-	async ask(history: ChatMessage[], question: string): Promise<string> {
+	async ask(
+		history: ChatMessage[],
+		question: string,
+		modelId: string,
+	): Promise<string> {
 		const messages = [
 			...history,
-			{ role: 'user', content: question } as ChatMessage, // Приводим к типу ChatMessage
+			{ role: 'user', content: question } as ChatMessage,
 		];
 		
 		try {
 			const response = await axios.post(
 				'https://api.openai.com/v1/chat/completions',
-				{ model: 'gpt-4o', messages },
+				{ model: modelId, messages },
 				{
 					headers: { Authorization: `Bearer ${this.config.openaiApiKey}` },
 					httpsAgent: this.httpAgent,

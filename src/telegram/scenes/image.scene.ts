@@ -21,8 +21,9 @@ export class ImageScene {
 	async onText(@Ctx() ctx: Scenes.SceneContext) {
 		const thinkingMessage = await ctx.reply('Создаю шедевр... 🎨');
 		const prompt = (ctx.message as any).text;
-		const provider = this.llmService.getProvider();
-		const imageUrl = await provider.createImage(prompt);
+		
+		const imageProvider = this.llmService.getImageProvider();
+		const imageUrl = await imageProvider.createImage(prompt);
 		
 		await ctx.telegram.editMessageText(
 			ctx.chat.id,
@@ -30,6 +31,7 @@ export class ImageScene {
 			null,
 			imageUrl,
 		);
+		
 		await ctx.scene.leave();
 	}
 }

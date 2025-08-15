@@ -7,26 +7,33 @@ import { GeminiService } from '../providers/gemini/gemini.service';
 
 @Injectable()
 export class LlmService {
-	private readonly provider: LlmProvider;
-	
 	constructor(
-		@Inject(appConfig.KEY)
-		private readonly config: ConfigType<typeof appConfig>,
+		@Inject(appConfig.KEY) private config: ConfigType<typeof appConfig>,
 		private readonly openaiService: OpenaiService,
 		private readonly geminiService: GeminiService,
-	) {
-		// Выбираем провайдера на основе переменной окружения
-		if (config.defaultLlmProvider === 'gemini') {
-			this.provider = this.geminiService;
-			console.log('Using Gemini as the default provider.');
-		} else {
-			this.provider = this.openaiService;
-			console.log('Using OpenAI as the default provider.');
+	) {}
+	
+	/**
+	 * Определяет, какой сервис использовать (OpenAI или Gemini)
+	 * на основе идентификатора модели, выбранной пользователем.
+	 * @param modelId - Идентификатор модели (например, 'gpt-4o' или 'models/gemini-1.5-pro').
+	 * @returns Экземпляр сервиса, соответствующий модели.
+	 */
+	getProviderForModel(modelId: string): LlmProvider {
+		// Если в названии модели есть 'gemini' или 'models/', это Gemini.
+		if (modelId.includes('gemini') || modelId.includes('models/')) {
+			return this.geminiService;
 		}
+		// Во всех остальных случаях (gpt-4, gpt-3.5 и т.д.) используется OpenAI.
+		return this.openaiService;
 	}
 	
-	// Метод для получения активного провайдера
-	getProvider(): LlmProvider {
-		return this.provider;
+	/**
+	 * Возвращает сервис, отвечающий за генерацию изображений.
+	 * В текущей реализации это всегда OpenaiService (DALL-E).
+	 * @returns Экземпляр OpenaiService.
+	 */
+	getImageProvider(): LlmProvider {
+		return this.openaiService;
 	}
 }

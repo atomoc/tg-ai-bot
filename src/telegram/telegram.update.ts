@@ -1,4 +1,11 @@
-import { Update, Ctx, Start, Command, On, Action } from 'nestjs-telegraf';
+import {
+	Update,
+	Ctx,
+	Start,
+	Command,
+	On,
+	Action,
+} from 'nestjs-telegraf';
 import { Context, Scenes, Markup } from 'telegraf';
 import { LlmService } from '../llm/llm.service';
 import { ContextService } from '../context/context.service';
@@ -40,12 +47,14 @@ export class TelegramUpdate {
 		const models = await this.modelService.getModelsByProvider(provider);
 		
 		if (!models || models.length === 0) {
-			await ctx.editMessageText('😕 Не удалось загрузить список моделей. Попробуйте позже.');
+			await ctx.editMessageText(
+				'😕 Не удалось загрузить список моделей. Попробуйте позже.',
+			);
 			return;
 		}
 		
-		const buttons = models.map(model =>
-			Markup.button.callback(model.name, `select_model_${model.id}`)
+		const buttons = models.map((model) =>
+			Markup.button.callback(model.name, `select_model_${model.id}`),
 		);
 		
 		const keyboard = Markup.inlineKeyboard(
@@ -53,7 +62,7 @@ export class TelegramUpdate {
 				if (index % 2 === 0) acc.push([button]);
 				else acc[acc.length - 1].push(button);
 				return acc;
-			}, [])
+			}, []),
 		);
 		
 		await ctx.editMessageText(`Выберите модель для ${provider}:`, keyboard);
@@ -67,8 +76,8 @@ export class TelegramUpdate {
 	}
 	
 	@Command('image')
-	async onImageCommand(@Ctx() ctx: Scenes.SceneContext) {
-		await ctx.scene.enter('CREATE_IMAGE_SCENE');
+	async onImageCommand(@Ctx() anusc: Scenes.SceneContext) {
+		await anusc.scene.enter('CREATE_IMAGE_SCENE');
 	}
 	
 	@On('text')
@@ -77,31 +86,43 @@ export class TelegramUpdate {
 		const chatId = ctx.chat.id;
 		const userMessage = (ctx.message as any).text;
 		
-		const provider = this.llmService.getProvider();
-		let response: string;
-		
 		if (userMessage.toLowerCase().startsWith('картинка ')) {
 			const prompt = userMessage.substring(9).trim();
-			response = await provider.createImage(prompt);
-		} else {
-			const history = this.contextService.getContext(chatId);
-			const selectedModel = this.modelService.getUserModel(chatId);
+			const imageProvider = this.llmService.getImageProvider();
+			const imageUrl = await imageProvider.createImage(prompt);
 			
-			response = await provider.ask(history, userMessage, selectedModel);
-			
-			this.contextService.updateContext(chatId, { role: 'user', content: userMessage });
-			this.contextService.updateContext(chatId, { role: 'assistant', content: response });
-		}
-		
-		try {
 			await ctx.telegram.editMessageText(
 				chatId,
 				thinkingMessage.message_id,
 				null,
-				response,
+				imageUrl,
 			);
-		} catch (e) {
-			await ctx.reply(response);
+			return;
+		} else {
+			const history = this.contextService.getContext(chatId);
+			const selectedModel = this.modelService.getUserModel(chatId);
+			const provider = this.llmService.getProviderForModel(selectedModel);
+			const response = await provider.ask(history, userMessage, selectedModel);
+			
+			this.contextService.updateContext(chatId, {
+				role: 'user',
+				content: userMessage,
+			});
+			this.contextService.updateContext(chatId, {
+				role: 'assistant',
+				content: response,
+			});
+			
+			try {
+				await ctx.telegram.editMessageText(
+					chatId,
+					thinkingMessage.message_id,
+					null,
+					response,
+				);
+			} catch (e) {
+				await ctx.reply(response);
+			}
 		}
 	}
 }

@@ -1,0 +1,57 @@
+{
+  "351966078": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "привет"
+      },
+      {
+        "role": "assistant",
+        "content": "Привет! Как дела?\n"
+      },
+      {
+        "role": "user",
+        "content": "как дела"
+      },
+      {
+        "role": "assistant",
+        "content": "Всё хорошо, спасибо! А у тебя как дела?\n"
+      },
+      {
+        "role": "user",
+        "content": "i dont know"
+      },
+      {
+        "role": "assistant",
+        "content": "That's okay.  Sometimes it's hard to put your feelings into words.  Is there anything specific you'd like to talk about, or would you prefer to just chat about something else?\n"
+      },
+      {
+        "role": "user",
+        "content": "i not undestand you"
+      },
+      {
+        "role": "assistant",
+        "content": "My apologies!  I understand.  I'm a large language model, and sometimes my phrasing can be a bit complex.  \n\nWhat is it that you don't understand?  Let's try a simpler question. How are you feeling right now?  (Happy, sad, tired, etc.)\n"
+      },
+      {
+        "role": "user",
+        "content": "привет"
+      },
+      {
+        "role": "assistant",
+        "content": "Привет!\n"
+      },
+      {
+        "role": "user",
+        "content": "ты кто"
+      },
+      {
+        "role": "assistant",
+        "content": "Я — большая языковая модель, разработанная Google.\n"
+      }
+    ],
+    "data": {
+      "model": "gpt-5"
+    }
+  }
+}

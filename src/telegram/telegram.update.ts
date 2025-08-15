@@ -1,19 +1,69 @@
-import { Update, Ctx, Start, Command, On } from 'nestjs-telegraf';
-import { Context, Scenes } from 'telegraf';
+import { Update, Ctx, Start, Command, On, Action } from 'nestjs-telegraf';
+import { Context, Scenes, Markup } from 'telegraf';
 import { LlmService } from '../llm/llm.service';
-import { ContextService, ChatMessage } from '../context/context.service'; // Импортируем
+import { ContextService } from '../context/context.service';
+import { ModelService } from '../model/model.service';
 
 @Update()
 export class TelegramUpdate {
-	// Подключаем ContextService
 	constructor(
 		private readonly llmService: LlmService,
 		private readonly contextService: ContextService,
+		private readonly modelService: ModelService,
 	) {}
 	
 	@Start()
-	onStart(): string {
-		return 'Напишите свой вопрос, чтобы получить ответ от AI.';
+	onStart(@Ctx() ctx: Context) {
+		const welcomeMessage = `Привет! Я ваш AI-ассистент.
+  
+Напишите свой вопрос, чтобы получить ответ.
+
+Используйте команду /model, чтобы выбрать AI-модель для ответов.
+Используйте команду /image, чтобы сгенерировать изображение.`;
+		ctx.reply(welcomeMessage);
+	}
+	
+	@Command('model')
+	async onModelCommand(@Ctx() ctx: Context) {
+		const keyboard = Markup.inlineKeyboard([
+			[Markup.button.callback('🤖 OpenAI', 'select_provider_openai')],
+			[Markup.button.callback('✨ Gemini', 'select_provider_gemini')],
+		]);
+		await ctx.reply('Выберите провайдера:', keyboard);
+	}
+	
+	@Action(/select_provider_(.+)/)
+	async onProviderSelect(@Ctx() ctx: any) {
+		const provider = ctx.match[1] as 'openai' | 'gemini';
+		await ctx.editMessageText(`🔄 Загружаю список моделей для ${provider}...`);
+		
+		const models = await this.modelService.getModelsByProvider(provider);
+		
+		if (!models || models.length === 0) {
+			await ctx.editMessageText('😕 Не удалось загрузить список моделей. Попробуйте позже.');
+			return;
+		}
+		
+		const buttons = models.map(model =>
+			Markup.button.callback(model.name, `select_model_${model.id}`)
+		);
+		
+		const keyboard = Markup.inlineKeyboard(
+			buttons.reduce((acc, button, index) => {
+				if (index % 2 === 0) acc.push([button]);
+				else acc[acc.length - 1].push(button);
+				return acc;
+			}, [])
+		);
+		
+		await ctx.editMessageText(`Выберите модель для ${provider}:`, keyboard);
+	}
+	
+	@Action(/select_model_(.+)/)
+	async onModelSelect(@Ctx() ctx: any) {
+		const modelId = ctx.match[1];
+		this.modelService.setUserModel(ctx.chat.id, modelId);
+		await ctx.editMessageText(`✅ Модель ${modelId} была успешно выбрана!`);
 	}
 	
 	@Command('image')
@@ -35,41 +85,23 @@ export class TelegramUpdate {
 			response = await provider.createImage(prompt);
 		} else {
 			const history = this.contextService.getContext(chatId);
-			response = await provider.ask(history, userMessage);
+			const selectedModel = this.modelService.getUserModel(chatId);
+			
+			response = await provider.ask(history, userMessage, selectedModel);
+			
 			this.contextService.updateContext(chatId, { role: 'user', content: userMessage });
 			this.contextService.updateContext(chatId, { role: 'assistant', content: response });
 		}
 		
-		// Разбиваем по 4096 символов
-		const splitMessage = (text: string, limit = 4096): string[] => {
-			const parts = [];
-			let i = 0;
-			while (i < text.length) {
-				parts.push(text.slice(i, i + limit));
-				i += limit;
-			}
-			return parts;
-		};
-		
-		const parts = splitMessage(response);
-		
 		try {
-			// Если только одна часть — просто редактируем сообщение
-			if (parts.length === 1) {
-				await ctx.telegram.editMessageText(chatId, thinkingMessage.message_id, undefined, parts[0]);
-			} else {
-				// Иначе удаляем старое "Думаю..." и отправляем по частям
-				await ctx.telegram.deleteMessage(chatId, thinkingMessage.message_id);
-				for (const part of parts) {
-					await ctx.reply(part);
-				}
-			}
+			await ctx.telegram.editMessageText(
+				chatId,
+				thinkingMessage.message_id,
+				null,
+				response,
+			);
 		} catch (e) {
-			console.error('Failed to edit or send message:', e.message);
-			for (const part of parts) {
-				await ctx.reply(part);
-			}
+			await ctx.reply(response);
 		}
 	}
-	
 }

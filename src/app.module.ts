@@ -4,18 +4,20 @@ import appConfig from './config/app.config';
 import { LlmModule } from './llm/llm.module';
 import { ProvidersModule } from './providers/providers.module';
 import { TelegramModule } from './telegram/telegram.module';
-import {ContextModule} from "./context/context.module";
+import { ContextModule } from './context/context.module';
+import { ModelModule } from './model/model.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [appConfig],
-    }),
+    ConfigModule.forRoot({ isGlobal: true, load: [appConfig] }),
     LlmModule,
     ProvidersModule,
     TelegramModule,
     ContextModule,
+    ModelModule,
   ],
+  controllers: [AppController],
+  providers: [],
 })
 export class AppModule {}

@@ -6,6 +6,8 @@ services:
     build:
       context: .
     restart: always
+    ports:
+      - 4500:3000
     env_file:
       - .env
     volumes:

@@ -16,7 +16,7 @@ export class LlmService {
 	/**
 	 * Определяет, какой сервис использовать (OpenAI или Gemini)
 	 * на основе идентификатора модели, выбранной пользователем.
-	 * @param modelId - Идентификатор модели (например, 'gpt-4o' или 'models/gemini-1.5-pro').
+         * @param modelId - Идентификатор модели (например, 'gpt-4.1-mini' или 'models/gemini-1.5-pro').
 	 * @returns Экземпляр сервиса, соответствующий модели.
 	 */
 	getProviderForModel(modelId: string): LlmProvider {

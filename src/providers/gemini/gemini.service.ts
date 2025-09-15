@@ -46,8 +46,10 @@ export class GeminiService implements LlmProvider {
 		}));
 		
 		try {
-			const chat = model.startChat({ history: formattedHistory });
-			const result = await chat.sendMessage(question);
+                        const chat = model.startChat({ history: formattedHistory });
+                        const result = await chat.sendMessage(
+                                'Отвечай только plain text, без Markdown.\n\n' + question,
+                        );
 			return result.response.text();
 		} catch (error) {
 			console.error('Gemini Error:', error.message);

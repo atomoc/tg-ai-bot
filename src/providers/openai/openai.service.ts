@@ -28,10 +28,11 @@ export class OpenaiService implements LlmProvider {
 		question: string,
 		modelId: string,
 	): Promise<string> {
-		const messages = [
-			...history,
-			{ role: 'user', content: question } as ChatMessage,
-		];
+                const messages: ChatMessage[] = [
+                        { role: 'system', content: 'Отвечай только plain text, без Markdown.' },
+                        ...history,
+                        { role: 'user', content: question },
+                ];
 		
 		try {
 			const response = await axios.post(

@@ -61,10 +61,11 @@ export class ModelService {
 				.sort((a, b) => b.name.localeCompare(a.name));
 		} catch (error) {
 			console.error('Failed to fetch OpenAI models:', error.message);
-			return [
-				{ name: 'GPT-4o (Fallback)', id: 'gpt-4o' },
-				{ name: 'GPT-3.5 Turbo (Fallback)', id: 'gpt-3.5-turbo' },
-			];
+                        return [
+                                { name: 'GPT-4.1 Mini (Fallback)', id: 'gpt-4.1-mini' },
+                                { name: 'GPT-4o (Fallback)', id: 'gpt-4o' },
+                                { name: 'GPT-3.5 Turbo (Fallback)', id: 'gpt-3.5-turbo' },
+                        ];
 		}
 	}
 	
@@ -127,6 +128,8 @@ export class ModelService {
 		}
 		
 		// Возвращаем модель по умолчанию в зависимости от выбранного провайдера
-		return defaultProvider === 'gemini' ? 'models/gemini-1.5-flash' : 'gpt-4o';
-	}
+                return defaultProvider === 'gemini'
+                        ? 'models/gemini-1.5-flash'
+                        : 'gpt-4.1-mini';
+        }
 }
